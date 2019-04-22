@@ -2,7 +2,7 @@
   "name": "azure-func-middleware",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,10 +10,24 @@
     "type": "git",
     "url": "git+https://github.com/safer-bwd/azure-func-middleware.git"
   },
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/safer-bwd/azure-func-middleware/issues"
   },
-  "homepage": "https://github.com/safer-bwd/azure-func-middleware#readme"
+  "author": "Anton Safronov <safer.anton@gmail.com>",
+  "license": "ISC",
+
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.4.0",
+    "@babel/node": "^7.2.2",
+    "@babel/preset-env": "^7.4.1",
+    "babel-eslint": "^10.0.1",
+    "babel-jest": "^24.5.0",
+    "cross-env": "^5.2.0",
+    "eslint": "^5.15.3",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jest": "^22.4.1",
+    "jest": "^24.5.0"
+  }
 }
