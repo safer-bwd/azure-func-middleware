@@ -1,6 +1,6 @@
 {
   "name": "azure-func-middleware",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Middleware pattern implementation for Azure Functions JS",
   "main": "dist/index.js",
   "repository": {
