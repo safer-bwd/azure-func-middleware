@@ -7,10 +7,12 @@ class AzureFuncMiddleware {
 
   use(fn) {
     this.middlewares.push({ fn });
+    return this;
   }
 
   catch(fn) {
     this.middlewares.push({ fn, isError: true });
+    return this;
   }
 
   listen() {
