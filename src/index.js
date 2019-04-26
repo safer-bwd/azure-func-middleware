@@ -66,7 +66,11 @@ class AzureFuncMiddleware {
 
         const { fn } = middleware;
         try {
-          await fn(ctx, dispatch.bind(null, i + 1, err));
+          if (err) {
+            await fn(err, ctx, dispatch.bind(null, i + 1, err));
+          } else {
+            await fn(ctx, dispatch.bind(null, i + 1));
+          }
         } catch (e) {
           dispatch(i + 1, e);
         }
