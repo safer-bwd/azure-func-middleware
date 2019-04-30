@@ -85,11 +85,11 @@ class AzureFuncMiddleware {
         }
 
         const { fn } = mw;
-        const fnMw = error ? fn.bind(null, error, ctx, next)
+        const mwFn = error ? fn.bind(null, error, ctx, next)
           : fn.bind(null, ctx, next);
 
         try {
-          await fnMw();
+          await mwFn();
         } catch (err) {
           next(err);
         }
@@ -101,6 +101,5 @@ class AzureFuncMiddleware {
     };
   }
 }
-
 
 module.exports = AzureFuncMiddleware;
