@@ -1,13 +1,4 @@
-const createPromiseObj = () => {
-  const obj = {};
-
-  obj.promise = new Promise((resolve, reject) => {
-    obj.resolve = resolve;
-    obj.reject = reject;
-  });
-
-  return obj;
-};
+import createPromise from './create-promise';
 
 class AzureFuncMiddleware {
   constructor() {
@@ -32,7 +23,7 @@ class AzureFuncMiddleware {
     return (ctx) => {
       let doneCalled = false;
       const originalDone = ctx.done;
-      const donePromiseObj = createPromiseObj();
+      const donePromise = createPromise();
 
       ctx.done = (...args) => {
         const [,, isPromise] = args;
@@ -51,9 +42,9 @@ class AzureFuncMiddleware {
 
         const [err, result] = args;
         if (err) {
-          donePromiseObj.reject(err);
+          donePromise.reject(err);
         } else {
-          donePromiseObj.resolve(result);
+          donePromise.resolve(result);
         }
       };
 
@@ -71,7 +62,7 @@ class AzureFuncMiddleware {
         const mw = this.middlewares[index];
         if (!mw) {
           if (error && !doneCalled) {
-            donePromiseObj.reject(error);
+            donePromise.reject(error);
           }
           return;
         }
@@ -85,11 +76,11 @@ class AzureFuncMiddleware {
         }
 
         const { fn } = mw;
-        const fnMw = error ? fn.bind(null, error, ctx, next)
+        const mwFn = error ? fn.bind(null, error, ctx, next)
           : fn.bind(null, ctx, next);
 
         try {
-          await fnMw();
+          await mwFn();
         } catch (err) {
           next(err);
         }
@@ -97,10 +88,9 @@ class AzureFuncMiddleware {
 
       handle(0);
 
-      return donePromiseObj.promise;
+      return donePromise;
     };
   }
 }
-
 
 module.exports = AzureFuncMiddleware;
