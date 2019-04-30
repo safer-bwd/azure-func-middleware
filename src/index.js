@@ -5,13 +5,27 @@ class AzureFuncMiddleware {
     this.middlewares = [];
   }
 
-  use(fn) {
-    this.middlewares.push({ fn });
+  use(fns) {
+    if (Array.isArray(fns)) {
+      this.middlewares.push(...fns.map(fn => ({ fn })));
+    } else {
+      const fn = fns;
+      this.middlewares.push({ fn });
+    }
+
     return this;
   }
 
-  catch(fn) {
-    this.middlewares.push({ fn, isErrorMw: true });
+  catch(fns) {
+    const isErrorMw = true;
+
+    if (Array.isArray(fns)) {
+      this.middlewares.push(...fns.map(fn => ({ fn, isErrorMw })));
+    } else {
+      const fn = fns;
+      this.middlewares.push({ fn, isErrorMw });
+    }
+
     return this;
   }
 
