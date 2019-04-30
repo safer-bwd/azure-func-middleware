@@ -107,4 +107,4 @@ class AzureFuncMiddleware {
   }
 }
 
-module.exports = AzureFuncMiddleware;
+export default AzureFuncMiddleware;
