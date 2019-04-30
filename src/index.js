@@ -42,7 +42,7 @@ class AzureFuncMiddleware {
         }
 
         if (doneCalled) {
-          const err = new Error('done() next() called multiple times');
+          const err = new Error('done() called multiple times');
           ctx.log.error(err);
           return;
         }
