@@ -5,26 +5,37 @@ class AzureFuncMiddleware {
     this.middlewares = [];
   }
 
-  use(fns) {
-    if (Array.isArray(fns)) {
-      this.middlewares.push(...fns.map(fn => ({ fn })));
-    } else {
-      const fn = fns;
-      this.middlewares.push({ fn });
-    }
+  use(fn) {
+    const predicate = (ctx, err) => !err;
+    return this.useIf(predicate, fn);
+  }
 
+  useIfError(fn) {
+    const predicate = (ctx, err) => !!err;
+    return this.useIf(predicate, fn);
+  }
+
+  useIf(predicate, fn) {
+    this.middlewares.push({ fn, predicate });
     return this;
   }
 
-  catch(fns) {
-    const isErrorMw = true;
+  useChain(chain) {
+    chain.forEach((mw) => {
+      if (typeof mw === 'function') {
+        this.use(mw);
+        return;
+      }
 
-    if (Array.isArray(fns)) {
-      this.middlewares.push(...fns.map(fn => ({ fn, isErrorMw })));
-    } else {
-      const fn = fns;
-      this.middlewares.push({ fn, isErrorMw });
-    }
+      const { fn, predicate, error } = mw;
+      if (error) {
+        this.useIfError(fn);
+      } else if (predicate) {
+        this.useIf(predicate, fn);
+      } else {
+        this.use(fn);
+      }
+    });
 
     return this;
   }
@@ -38,6 +49,8 @@ class AzureFuncMiddleware {
       let doneCalled = false;
       const originalDone = ctx.done;
       const donePromise = createPromise();
+
+      ctx.state = {};
 
       ctx.done = (...args) => {
         const [,, isPromise] = args;
@@ -62,8 +75,6 @@ class AzureFuncMiddleware {
         }
       };
 
-      ctx.state = {};
-
       let mwIndex = -1;
       const handle = async (index, error) => {
         if (index <= mwIndex) {
@@ -82,8 +93,9 @@ class AzureFuncMiddleware {
         }
 
         const next = err => handle(index + 1, err);
-        const { isErrorMw } = mw;
-        const needSkipMw = (error && !isErrorMw) || (!error && isErrorMw);
+
+        const { predicate } = mw;
+        const needSkipMw = !predicate(ctx, error);
         if (needSkipMw) {
           next(error);
           return;
