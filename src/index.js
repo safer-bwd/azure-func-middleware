@@ -60,8 +60,7 @@ class AzureFuncMiddleware {
         }
 
         if (doneCalled) {
-          const err = new Error('done() called multiple times');
-          ctx.log.error(err);
+          ctx.log.error(new Error('done() called multiple times'));
           return;
         }
 
@@ -78,8 +77,7 @@ class AzureFuncMiddleware {
       let mwIndex = -1;
       const handle = async (index, error) => {
         if (index <= mwIndex) {
-          const err = new Error('next() called multiple times');
-          ctx.log.error(err);
+          ctx.log.error(new Error('next() called multiple times'));
           return;
         }
 
@@ -92,7 +90,11 @@ class AzureFuncMiddleware {
           return;
         }
 
-        const next = err => handle(index + 1, err);
+        let nextCalled = false;
+        const next = (err) => {
+          nextCalled = true;
+          return handle(index + 1, err);
+        };
 
         const { predicate } = mw;
         const needSkipMw = !predicate(ctx, error);
@@ -108,7 +110,11 @@ class AzureFuncMiddleware {
         try {
           await mwFn();
         } catch (err) {
-          next(err);
+          if (nextCalled) {
+            ctx.log.error('unhandled error after next() called', err);
+          } else {
+            next(err);
+          }
         }
       };
 
