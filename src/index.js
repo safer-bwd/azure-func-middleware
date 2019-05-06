@@ -15,6 +15,10 @@ class AzureFuncMiddleware {
     return this.useIf(predicate, fn);
   }
 
+  catch(fn) {
+    return this.useIfError(fn);
+  }
+
   useIf(predicate, fn) {
     this.middlewares.push({ fn, predicate });
     return this;
