@@ -1,38 +1,45 @@
-import createPromise from './create-promise';
+import Middleware from './middleware/Middleware';
+import ErrorMiddleware from './middleware/ErrorMiddleware';
+import createPromise from './utils/create-promise';
+import isFunction from './utils/is-function';
 
 class AzureFuncMiddleware {
-  constructor() {
+  constructor(options = {}) {
     this.middlewares = [];
+    this.silent = options.silent || false;
   }
 
   use(fn) {
-    const predicate = (ctx, err) => !err;
-    return this.useIf(predicate, fn);
+    const middleware = new Middleware(fn);
+    this.middlewares.push(middleware);
+    return this;
+  }
+
+  useIf(predicate, fn) {
+    const middleware = new Middleware(fn, predicate);
+    this.middlewares.push(middleware);
+    return this;
   }
 
   useIfError(fn) {
-    const predicate = (ctx, err) => !!err;
-    return this.useIf(predicate, fn);
+    const middleware = new ErrorMiddleware(fn);
+    this.middlewares.push(middleware);
+    return this;
   }
 
   catch(fn) {
     return this.useIfError(fn);
   }
 
-  useIf(predicate, fn) {
-    this.middlewares.push({ fn, predicate });
-    return this;
-  }
-
-  useChain(chain) {
-    chain.forEach((mw) => {
-      if (typeof mw === 'function') {
-        this.use(mw);
+  useChain(middlewares) {
+    middlewares.forEach((middleware) => {
+      if (isFunction(middleware)) {
+        this.use(middleware);
         return;
       }
 
-      const { fn, predicate, error } = mw;
-      if (error) {
+      const { fn, predicate, isError } = middleware;
+      if (isError) {
         this.useIfError(fn);
       } else if (predicate) {
         this.useIf(predicate, fn);
@@ -50,11 +57,12 @@ class AzureFuncMiddleware {
 
   _createHandler() {
     return (ctx) => {
+      // the recommended namespace for passing information through middleware
+      ctx.state = {};
+
       let doneCalled = false;
       const originalDone = ctx.done;
       const donePromise = createPromise();
-
-      ctx.state = {};
 
       ctx.done = (...args) => {
         const [,, isPromise] = args;
@@ -67,7 +75,6 @@ class AzureFuncMiddleware {
           ctx.log.error(new Error('done() called multiple times'));
           return;
         }
-
         doneCalled = true;
 
         const [err, result] = args;
@@ -78,16 +85,9 @@ class AzureFuncMiddleware {
         }
       };
 
-      let mwIndex = -1;
       const handle = async (index, error) => {
-        if (index <= mwIndex) {
-          ctx.log.error(new Error('next() called multiple times'));
-          return;
-        }
-
-        mwIndex = index;
-        const mw = this.middlewares[index];
-        if (!mw) {
+        const middleware = this.middlewares[index];
+        if (!middleware) {
           if (error && !doneCalled) {
             donePromise.reject(error);
           }
@@ -96,23 +96,21 @@ class AzureFuncMiddleware {
 
         let nextCalled = false;
         const next = (err) => {
+          if (nextCalled) {
+            ctx.log.error(new Error('next() called multiple times'));
+            return null; // TODO: что возвращать?
+          }
           nextCalled = true;
           return handle(index + 1, err);
         };
 
-        const { predicate } = mw;
-        const needSkipMw = !predicate(ctx, error);
-        if (needSkipMw) {
+        if (!middleware.needExec(ctx, error)) {
           next(error);
           return;
         }
 
-        const { fn } = mw;
-        const mwFn = error ? fn.bind(null, error, ctx, next)
-          : fn.bind(null, ctx, next);
-
         try {
-          await mwFn();
+          await middleware.exec(ctx, error, next);
         } catch (err) {
           if (nextCalled) {
             ctx.log.error('unhandled error after next() called', err);
