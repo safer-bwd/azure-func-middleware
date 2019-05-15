@@ -2,6 +2,7 @@ import Middleware from './middleware/Middleware';
 import ErrorMiddleware from './middleware/ErrorMiddleware';
 import createPromise from './utils/create-promise';
 import isFunction from './utils/is-function';
+import logger from './utils/logger';
 
 class AzureFuncMiddleware {
   constructor(options = {}) {
@@ -57,6 +58,8 @@ class AzureFuncMiddleware {
 
   _createHandler() {
     return (ctx) => {
+      const log = logger(ctx);
+
       // the recommended namespace for passing information through middleware
       ctx.state = {};
 
@@ -72,7 +75,7 @@ class AzureFuncMiddleware {
         }
 
         if (doneCalled) {
-          ctx.log.error(new Error('done() called multiple times'));
+          if (!this.silent) log(new Error('done() called multiple times'));
           return;
         }
         doneCalled = true;
@@ -97,7 +100,7 @@ class AzureFuncMiddleware {
         let nextCalled = false;
         const next = (err) => {
           if (nextCalled) {
-            ctx.log.error(new Error('next() called multiple times'));
+            if (!this.silent) log(new Error('next() called multiple times'));
             return Promise.resolve();
           }
           nextCalled = true;
@@ -113,10 +116,10 @@ class AzureFuncMiddleware {
           await middleware.exec(ctx, error, next);
         } catch (err) {
           if (nextCalled) {
-            ctx.log.error('unhandled error after next() called', err);
-          } else {
-            next(err);
+            if (!this.silent) log('unhandled error after next() called', err);
+            return;
           }
+          next(err);
         }
       };
 
