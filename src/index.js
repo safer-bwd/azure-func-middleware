@@ -98,7 +98,7 @@ class AzureFuncMiddleware {
         const next = (err) => {
           if (nextCalled) {
             ctx.log.error(new Error('next() called multiple times'));
-            return null; // TODO: что возвращать?
+            return Promise.resolve();
           }
           nextCalled = true;
           return handle(index + 1, err);

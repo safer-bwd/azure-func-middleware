@@ -2,6 +2,7 @@ class Middleware {
   constructor(fn, predicate = () => true) {
     this.fn = fn;
     this.predicate = predicate;
+    this.isError = false;
   }
 
   needExec(ctx, err) {
