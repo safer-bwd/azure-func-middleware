@@ -10,8 +10,8 @@ class Middleware {
     return !err && predicate();
   }
 
-  exec(ctx, err, next, ...args) {
-    const fn = this.fn.bind(null, ctx, next, ...args);
+  exec(ctx, err, next) {
+    const fn = this.fn.bind(null, ctx, next);
     return fn();
   }
 }

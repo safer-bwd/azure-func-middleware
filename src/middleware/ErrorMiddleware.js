@@ -8,8 +8,8 @@ class ErrorMiddleware {
     return this.isError && err;
   }
 
-  exec(ctx, err, next, ...args) {
-    const fn = this.fn.bind(null, err, ctx, next, ...args);
+  exec(ctx, err, next) {
+    const fn = this.fn.bind(null, err, ctx, next);
     return fn();
   }
 }
