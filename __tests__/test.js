@@ -114,7 +114,7 @@ describe('mixed chain', () => {
         ctx.log.info(2);
         ctx.state.count += 1;
         await wait();
-        await next();
+        next();
       })
       .use((ctx) => {
         ctx.log.info(3);
