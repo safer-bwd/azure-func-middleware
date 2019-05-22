@@ -40,7 +40,7 @@ describe('sync chain', () => {
       .listen();
   });
 
-  it('should resolve a correct reponse', async () => {
+  it('should resolve a correct response', async () => {
     const context = createContext();
     const { status, body } = await handler(context);
     expect(status).toEqual(200);
@@ -83,7 +83,7 @@ describe('async chain', () => {
       .listen();
   });
 
-  it('should resolve a correct reponse', async () => {
+  it('should resolve a correct response', async () => {
     const context = createContext();
     const { status, body } = await handler(context);
     expect(status).toEqual(200);
@@ -124,7 +124,7 @@ describe('mixed chain', () => {
       .listen();
   });
 
-  it('should resolve a correct reponse', async () => {
+  it('should resolve a correct response', async () => {
     const context = createContext();
     const { status, body } = await handler(context);
     expect(status).toEqual(200);
@@ -141,7 +141,7 @@ describe('mixed chain', () => {
   });
 });
 
-describe('chain with catch error #1', () => {
+describe('chain with catch an error #1', () => {
   let handler;
 
   beforeAll(() => {
@@ -164,7 +164,7 @@ describe('chain with catch error #1', () => {
       .listen();
   });
 
-  it('should resolve a correct reponse', async () => {
+  it('should resolve a correct response', async () => {
     const context = createContext();
     const { status, body } = await handler(context);
     expect(status).toEqual(500);
@@ -181,7 +181,7 @@ describe('chain with catch error #1', () => {
   });
 });
 
-describe('chain with catch error #2', () => {
+describe('chain with catch an error #2', () => {
   let handler;
 
   beforeAll(() => {
@@ -204,7 +204,7 @@ describe('chain with catch error #2', () => {
       .listen();
   });
 
-  it('should resolve a correct reponse', async () => {
+  it('should resolve a correct response', async () => {
     const context = createContext();
     const { status, body } = await handler(context);
     expect(status).toEqual(200);
@@ -221,7 +221,7 @@ describe('chain with catch error #2', () => {
   });
 });
 
-describe('chain with catch error #3', () => {
+describe('chain with catch an error #3', () => {
   let handler;
 
   beforeAll(() => {
@@ -244,7 +244,7 @@ describe('chain with catch error #3', () => {
       .listen();
   });
 
-  it('should resolve a correct reponse', async () => {
+  it('should resolve a correct response', async () => {
     const context = createContext();
     const { status, body } = await handler(context);
     expect(status).toEqual(500);
@@ -261,7 +261,7 @@ describe('chain with catch error #3', () => {
   });
 });
 
-describe('chain with uncatch error', () => {
+describe('chain with an unhandled error #1', () => {
   let handler;
 
   beforeAll(() => {
@@ -270,6 +270,42 @@ describe('chain with uncatch error', () => {
         ctx.log.info('use1');
         await wait();
         throw new Error('error');
+      })
+      .use(async (ctx) => {
+        ctx.log.info('use2');
+        await wait();
+        ctx.done(null, { status: 200, body: 'ok' });
+      })
+      .listen();
+  });
+
+  it('should reject', async () => {
+    const context = createContext();
+    await expect(handler(context)).rejects.toEqual(new Error('error'));
+  });
+
+  it('should be a correct order', async () => {
+    const ctx = createContext();
+    try {
+      await handler(ctx);
+    } catch (e) {
+      //
+    }
+    const { calls } = ctx.log.info.mock;
+    expect(calls.length).toBe(1);
+    expect(calls[0][0]).toBe('use1');
+  });
+});
+
+describe('chain with an unhandled error #2', () => {
+  let handler;
+
+  beforeAll(() => {
+    handler = new AzureFuncMiddleware()
+      .use(async (ctx, next) => {
+        ctx.log.info('use1');
+        await wait();
+        next(new Error('error'));
       })
       .use(async (ctx) => {
         ctx.log.info('use2');
