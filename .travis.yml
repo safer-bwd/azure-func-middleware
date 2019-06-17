@@ -5,5 +5,5 @@ node_js:
 - stable
 
 script:
-- npm run eslint .
+- npm lint
 - npm test
