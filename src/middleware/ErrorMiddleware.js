@@ -1,17 +1,12 @@
-class ErrorMiddleware {
+import AbstractMiddleware from './AbstractMiddleware';
+
+export default class extends AbstractMiddleware {
   constructor(fn) {
-    this.fn = fn;
-    this.isError = true;
+    super(fn);
+    this.isErrorHandler = true;
   }
 
-  needExec(ctx, err) {
-    return this.isError && err;
-  }
-
-  exec(ctx, err, next) {
-    const fn = this.fn.bind(null, err, ctx, next);
-    return fn();
+  needExec(err) {
+    return this.isErrorHandler && err;
   }
 }
-
-export default ErrorMiddleware;

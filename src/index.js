@@ -68,8 +68,8 @@ class AzureFuncMiddleware {
       const donePromise = createPromise();
 
       ctx.done = (...args) => {
-        const [,, isPromise] = args;
-        if (isPromise) {
+        const [,, calledOriginal] = args;
+        if (calledOriginal) {
           originalDone(...args);
           return;
         }
@@ -107,13 +107,13 @@ class AzureFuncMiddleware {
           return handle(index + 1, err);
         };
 
-        if (!middleware.needExec(ctx, error)) {
+        if (!middleware.needExec(error, ctx)) {
           next(error);
           return;
         }
 
         try {
-          await middleware.exec(ctx, error, next);
+          await middleware.exec(error, ctx, next);
         } catch (err) {
           if (nextCalled) {
             if (!this.silent) log('unhandled error after next() called', err);

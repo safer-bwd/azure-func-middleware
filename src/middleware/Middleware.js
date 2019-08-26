@@ -1,19 +1,21 @@
-class Middleware {
-  constructor(fn, predicate = () => true) {
-    this.fn = fn;
+import AbstractMiddleware from './AbstractMiddleware';
+
+export default class extends AbstractMiddleware {
+  constructor(fn, predicate) {
+    super(fn);
     this.predicate = predicate;
-    this.isError = false;
   }
 
-  needExec(ctx, err) {
+  needExec(err, ctx) {
+    if (err) {
+      return false;
+    }
+
+    if (!this.predicate) {
+      return true;
+    }
+
     const predicate = this.predicate.bind(null, ctx);
-    return !err && predicate();
-  }
-
-  exec(ctx, err, next) {
-    const fn = this.fn.bind(null, ctx, next);
-    return fn();
+    return predicate();
   }
 }
-
-export default Middleware;
