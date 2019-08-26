@@ -36,11 +36,11 @@ class AzureFuncMiddleware {
     middlewares.forEach((mw) => {
       const props = isFunction(mw) ? { fn: mw } : mw;
       const { fn, predicate, isError } = props;
-      
-      const middleware = isError 
+
+      const middleware = isError
         ? new ErrorMiddleware(fn)
-        : new Middleware(fn, predicate)
-      
+        : new Middleware(fn, predicate);
+
       this.middlewares.push(middleware);
     });
 
