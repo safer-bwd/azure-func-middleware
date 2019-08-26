@@ -243,15 +243,13 @@ it('chain with useIf()', async () => {
   expect(callsArgs).toEqual(['use1', 'useIf2', 'use2']);
 });
 
-it('chain with useChain()', async () => {
-  const chainOfCommon = [
-    {
-      fn: async (ctx, next) => {
-        ctx.log.info('chainOfCommon1');
-        ctx.state.count += 1;
-        await wait();
-        next();
-      },
+it('chain with useMany()', async () => {
+  const commonMws = [
+    async (ctx, next) => {
+      ctx.log.info('chainOfCommon1');
+      ctx.state.count += 1;
+      await wait();
+      next();
     },
     {
       predicate: ctx => ctx.state.count === 1,
@@ -271,7 +269,7 @@ it('chain with useChain()', async () => {
       await wait();
       next();
     })
-    .useChain(chainOfCommon)
+    .useMany(commonMws)
     .use(async (ctx) => {
       ctx.log.info('use2');
       ctx.state.count += 1;

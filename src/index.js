@@ -32,21 +32,16 @@ class AzureFuncMiddleware {
     return this.useIfError(fn);
   }
 
-  useChain(middlewares) {
-    middlewares.forEach((middleware) => {
-      if (isFunction(middleware)) {
-        this.use(middleware);
-        return;
-      }
-
-      const { fn, predicate, isError } = middleware;
-      if (isError) {
-        this.useIfError(fn);
-      } else if (predicate) {
-        this.useIf(predicate, fn);
-      } else {
-        this.use(fn);
-      }
+  useMany(middlewares) {
+    middlewares.forEach((mw) => {
+      const props = isFunction(mw) ? { fn: mw } : mw;
+      const { fn, predicate, isError } = props;
+      
+      const middleware = isError 
+        ? new ErrorMiddleware(fn)
+        : new Middleware(fn, predicate)
+      
+      this.middlewares.push(middleware);
     });
 
     return this;

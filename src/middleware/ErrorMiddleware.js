@@ -3,10 +3,10 @@ import AbstractMiddleware from './AbstractMiddleware';
 export default class extends AbstractMiddleware {
   constructor(fn) {
     super(fn);
-    this.isErrorHandler = true;
+    this.isError = true;
   }
 
   needExec(err) {
-    return this.isErrorHandler && err;
+    return this.isError && err;
   }
 }

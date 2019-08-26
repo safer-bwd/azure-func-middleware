@@ -1,11 +1,11 @@
 export default class {
   constructor(fn) {
     this.fn = fn;
-    this.isErrorHandler = false;
+    this.isError = false;
   }
 
   exec(err, ctx, next) {
     const fn = this.fn.bind(null);
-    return this.isErrorHandler ? fn(err, ctx, next) : fn(ctx, next);
+    return this.isError ? fn(err, ctx, next) : fn(ctx, next);
   }
 }
