@@ -63,8 +63,8 @@ class AzureFuncMiddleware {
       const donePromise = createPromise();
 
       ctx.done = (...args) => {
-        const [,, calledOriginal] = args;
-        if (calledOriginal) {
+        const [,, originalCalled] = args;
+        if (originalCalled) {
           originalDone(...args);
           return;
         }

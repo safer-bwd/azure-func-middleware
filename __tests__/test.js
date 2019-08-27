@@ -17,7 +17,7 @@ const wait = (ms = 1) => new Promise((resolve) => {
   setTimeout(() => resolve(), ms);
 });
 
-it('sync chain', async () => {
+it('sync', async () => {
   const handler = new AzureFuncMiddleware()
     .use((ctx, next) => {
       ctx.log.info(1);
@@ -48,7 +48,7 @@ it('sync chain', async () => {
   expect(callsArgs).toEqual([1, 2, 3]);
 });
 
-it('async chain', async () => {
+it('async', async () => {
   const handler = new AzureFuncMiddleware()
     .use(async (ctx, next) => {
       ctx.log.info(1);
@@ -82,7 +82,7 @@ it('async chain', async () => {
   expect(callsArgs).toEqual([1, 2, 3]);
 });
 
-it('mixed chain', async () => {
+it('mixed', async () => {
   const handler = new AzureFuncMiddleware()
     .use((ctx, next) => {
       ctx.log.info(1);
@@ -114,7 +114,7 @@ it('mixed chain', async () => {
   expect(callsArgs).toEqual([1, 2, 3]);
 });
 
-it('chain with catching an error', async () => {
+it('catching an error', async () => {
   // eslint-disable-next-line jest/valid-expect-in-promise
   const handler = new AzureFuncMiddleware()
     .use(async (ctx) => {
@@ -148,7 +148,7 @@ it('chain with catching an error', async () => {
   expect(callsArgs).toEqual(['use1', 'catch1']);
 });
 
-it('chain with catching an error and recover a normal flow', async () => {
+it('catching an error and recover a normal flow', async () => {
   // eslint-disable-next-line jest/valid-expect-in-promise
   const handler = new AzureFuncMiddleware()
     .use(async (ctx) => {
@@ -180,7 +180,7 @@ it('chain with catching an error and recover a normal flow', async () => {
   expect(callsArgs).toEqual(['use1', 'catch1', 'use2']);
 });
 
-it('chain with an unhandled error', async () => {
+it('unhandled error', async () => {
   const handler = new AzureFuncMiddleware()
     .use(async (ctx) => {
       ctx.log.info('use1');
@@ -203,7 +203,7 @@ it('chain with an unhandled error', async () => {
   expect(calls[0][0]).toBe('use1');
 });
 
-it('chain with useIf()', async () => {
+it('useIf()', async () => {
   const handler = new AzureFuncMiddleware()
     .use(async (ctx, next) => {
       ctx.log.info('use1');
@@ -243,7 +243,7 @@ it('chain with useIf()', async () => {
   expect(callsArgs).toEqual(['use1', 'useIf2', 'use2']);
 });
 
-it('chain with useMany()', async () => {
+it('useMany()', async () => {
   const commonMws = [
     async (ctx, next) => {
       ctx.log.info('chainOfCommon1');
