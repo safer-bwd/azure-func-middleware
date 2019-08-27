@@ -1,5 +1,4 @@
-import Middleware from './middleware/Middleware';
-import ErrorMiddleware from './middleware/ErrorMiddleware';
+import createMiddleware from './middleware/create';
 import createPromise from './utils/create-promise';
 import isFunction from './utils/is-function';
 import logger from './utils/logger';
@@ -11,19 +10,19 @@ class AzureFuncMiddleware {
   }
 
   use(fn) {
-    const middleware = new Middleware(fn);
+    const middleware = createMiddleware({ fn });
     this.middlewares.push(middleware);
     return this;
   }
 
   useIf(predicate, fn) {
-    const middleware = new Middleware(fn, predicate);
+    const middleware = createMiddleware({ fn, predicate });
     this.middlewares.push(middleware);
     return this;
   }
 
   useIfError(fn) {
-    const middleware = new ErrorMiddleware(fn);
+    const middleware = createMiddleware({ fn, isError: true });
     this.middlewares.push(middleware);
     return this;
   }
@@ -35,12 +34,7 @@ class AzureFuncMiddleware {
   useMany(middlewares) {
     middlewares.forEach((mw) => {
       const props = isFunction(mw) ? { fn: mw } : mw;
-      const { fn, predicate, isError } = props;
-
-      const middleware = isError
-        ? new ErrorMiddleware(fn)
-        : new Middleware(fn, predicate);
-
+      const middleware = createMiddleware(props);
       this.middlewares.push(middleware);
     });
 
