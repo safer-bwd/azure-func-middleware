@@ -37,7 +37,6 @@ class AzureFuncMiddleware {
       const middleware = createMiddleware(props);
       this.middlewares.push(middleware);
     });
-
     return this;
   }
 
@@ -67,6 +66,7 @@ class AzureFuncMiddleware {
           if (!this.silent) log(new Error('done() called multiple times'));
           return;
         }
+
         doneCalled = true;
 
         const [err, result] = args;
@@ -80,9 +80,12 @@ class AzureFuncMiddleware {
       const handle = async (index, error) => {
         const middleware = this.middlewares[index];
         if (!middleware) {
-          if (error && !doneCalled) {
-            donePromise.reject(error);
-          }
+          if (error && !doneCalled) donePromise.reject(error);
+          return;
+        }
+
+        if (!middleware.needExec(error, ctx)) {
+          handle(index + 1, error);
           return;
         }
 
@@ -96,11 +99,6 @@ class AzureFuncMiddleware {
           return handle(index + 1, err);
         };
 
-        if (!middleware.needExec(error, ctx)) {
-          next(error);
-          return;
-        }
-
         try {
           await middleware.exec(error, ctx, next);
         } catch (err) {
@@ -108,7 +106,7 @@ class AzureFuncMiddleware {
             if (!this.silent) log('unhandled error after next() called', err);
             return;
           }
-          next(err);
+          handle(index + 1, err);
         }
       };
 
