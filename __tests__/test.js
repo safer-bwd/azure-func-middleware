@@ -17,7 +17,7 @@ const wait = (ms = 1) => new Promise((resolve) => {
   setTimeout(() => resolve(), ms);
 });
 
-it('sync', async () => {
+it('use() sync', async () => {
   const handler = new AzureFuncMiddleware()
     .use((ctx, next) => {
       ctx.log.info(1);
@@ -48,7 +48,7 @@ it('sync', async () => {
   expect(callsArgs).toEqual([1, 2, 3]);
 });
 
-it('async', async () => {
+it('use() async', async () => {
   const handler = new AzureFuncMiddleware()
     .use(async (ctx, next) => {
       ctx.log.info(1);
@@ -82,7 +82,7 @@ it('async', async () => {
   expect(callsArgs).toEqual([1, 2, 3]);
 });
 
-it('mixed', async () => {
+it('use() mixed', async () => {
   const handler = new AzureFuncMiddleware()
     .use((ctx, next) => {
       ctx.log.info(1);
@@ -114,7 +114,7 @@ it('mixed', async () => {
   expect(callsArgs).toEqual([1, 2, 3]);
 });
 
-it('catching an error', async () => {
+it('catch()', async () => {
   // eslint-disable-next-line jest/valid-expect-in-promise
   const handler = new AzureFuncMiddleware()
     .use(async (ctx) => {
@@ -148,7 +148,7 @@ it('catching an error', async () => {
   expect(callsArgs).toEqual(['use1', 'catch1']);
 });
 
-it('catching an error and recover a normal flow', async () => {
+it('catch() and recover a normal flow', async () => {
   // eslint-disable-next-line jest/valid-expect-in-promise
   const handler = new AzureFuncMiddleware()
     .use(async (ctx) => {
