@@ -3,18 +3,31 @@ import createPromise from './utils/create-promise';
 import isFunction from './utils/is-function';
 import logger from './utils/logger';
 
+/**
+ * @param {Object} options
+ * @param {boolean} [options.silent=false]
+ */
 class AzureFuncMiddleware {
   constructor(options = {}) {
     this.middlewares = [];
     this.silent = options.silent || false;
   }
 
+  /**
+   * Add a middleware to a cascade
+   * @param {middlewareFunction} fn
+   */
   use(fn) {
     const middleware = createMiddleware({ fn });
     this.middlewares.push(middleware);
     return this;
   }
 
+  /**
+   * Add a middleware with condition to a cascade
+   * @param {predicateFunction} predicate
+   * @param {middlewareFunction} fn
+   */
   useIf(predicate, fn) {
     const middleware = createMiddleware({ fn, predicate });
     this.middlewares.push(middleware);
@@ -27,10 +40,18 @@ class AzureFuncMiddleware {
     return this;
   }
 
+  /**
+   * Add a middleware for error handling to a cascade
+   * @param {middlewareErrorFunction} fn
+   */
   catch(fn) {
     return this.useIfError(fn);
   }
 
+  /**
+   * Add several middlewares to a cascade
+   * @param {Array<middleware|middlewareFunction>} middlewares
+   */
   useMany(middlewares) {
     middlewares.forEach((mw) => {
       const props = isFunction(mw) ? { fn: mw } : mw;
@@ -40,6 +61,10 @@ class AzureFuncMiddleware {
     return this;
   }
 
+  /**
+   * Compose middlewares to a handler
+   * @return {Promise}
+   */
   listen() {
     return this._createHandler();
   }
@@ -116,5 +141,32 @@ class AzureFuncMiddleware {
     };
   }
 }
+
+/**
+ * @typedef {Object} middleware The middleware object
+ * @property {middlewareFunction|middlewareErrorFunction} fn
+ * @property {boolean} [isError]
+ * @property {predicateFunction} [predicate]
+ */
+/**
+ * @typedef {Function} middlewareFunction
+ * @param {Object} context [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
+ * @param {nextFunction} next
+ */
+/**
+ * @typedef {Function} middlewareErrorFunction
+ * @param {Error} error
+ * @param {Object} context [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
+ * @param {nextFunction} next
+ */
+/**
+ * @typedef {Function} nextFunction
+ * @param {Error} [error]
+ */
+/**
+ * @typedef {Function} predicateFunction
+ * @param {Object} [context] [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
+ * @return {boolean}
+ */
 
 export default AzureFuncMiddleware;

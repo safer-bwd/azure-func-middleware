@@ -13,6 +13,7 @@
   "author": "Anton Safronov <safer.anton@gmail.com>",
   "license": "ISC",
   "scripts": {
+    "doc": "documentation readme src/** -s API",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "jest --colors",
@@ -32,6 +33,7 @@
     "babel-jest": "^24.9.0",
     "babel-plugin-add-module-exports": "^1.0.2",
     "cross-env": "^5.2.1",
+    "documentation": "^12.1.2",
     "eslint": "^5.16.0",
     "eslint-config-airbnb": "^17.1.1",
     "eslint-plugin-import": "^2.18.2",
