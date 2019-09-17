@@ -12,7 +12,7 @@ npm install azure-func-middleware --save
 
 ## Usage
 
-#### Flow
+#### Main flow
 
 index.js
 
@@ -36,6 +36,72 @@ module.exports = new AzureFuncMiddleware()
     ctx.done(null, { status: 500 });
   })
   .listen();
+```
+
+## Testing
+
+The handler that creates **azure-func-middleware** returns a promise. This fact can be used for testing.
+
+#### Using with the `$return` output binding
+
+function.json
+
+```
+{
+  "bindings": [
+    ...
+    {
+    "type": "http",
+    "direction": "out",
+    "name": "$return"
+    }
+  ]
+}
+```
+
+test.js
+
+```javascript
+const funcHandler = require('...');
+
+it('should work', async () => {
+  const context = { ... };
+  const expectedBody = ...;
+  const { status, body } = await funcHandler(context);
+  expect(status).toEqual(200);
+  expect(body).toEqual(expectedBody);
+});
+```
+
+#### Using with the named output binding
+
+function.json
+
+```
+{
+  "bindings": [
+    ...
+    {
+    "type": "http",
+    "direction": "out",
+    "name": "response"
+    }
+  ]
+}
+```
+
+test.js
+
+```javascript
+const funcHandler = require('...');
+
+it('should work', async () => {
+  const context = { ... };
+  const expectedBody = ...;
+  await funcHandler(context);
+  expect(context.res.status).toEqual(200);
+  expect(context.res.body).toEqual(expectedBody);
+});
 ```
 
 ## API
