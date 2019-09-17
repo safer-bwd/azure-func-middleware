@@ -84,7 +84,7 @@ function.json
     {
     "type": "http",
     "direction": "out",
-    "name": "response"
+    "name": "res"
     }
   ]
 }
