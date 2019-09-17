@@ -12,7 +12,9 @@ npm install azure-func-middleware --save
 
 ## Usage
 
-#### Main flow
+### Main flow
+
+Middleware handlers are executed in the order they are added. To move to the next middleware handler, use the `next` callback.
 
 index.js
 
@@ -26,43 +28,107 @@ module.exports = new AzureFuncMiddleware()
     next();
   })
   .use((ctx, next) => {
-    // will be called second if no error in first fn
+    // will be called second if no error in first
     // ...
     ctx.done(null, { status: 200 });
   })
   .catch((err, ctx, next) => {
-    // will be called if there is error in first or second fn
+    // will be called if there is error in first or second
     // ...
     ctx.done(null, { status: 500 });
   })
   .listen();
 ```
 
-## Testing
+### Response
 
-The handler that creates **azure-func-middleware** returns a promise. This fact can be used for testing.
+To complete the response process, use `done` callback of [the context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
 
 #### Using with the `$return` output binding
 
 function.json
 
-```
-{
-  "bindings": [
-    ...
     {
-    "type": "http",
-    "direction": "out",
-    "name": "$return"
+      "bindings": [
+        ...
+        {
+        "type": "http",
+        "direction": "out",
+        "name": "$return"
+        }
+      ]
     }
-  ]
-}
+
+index.js
+
+```javascript
+const AzureFuncMiddleware = require('azure-func-middleware');
+
+module.exports = new AzureFuncMiddleware()
+  .use((ctx) => {
+    const response = {
+      status: 200,
+      body: 'OK'
+    };
+    ctx.done(null, response);
+  })
+  .listen();
 ```
+
+#### Using with the named output binding
+
+function.json
+
+    {
+      "bindings": [
+        ...
+        {
+        "type": "http",
+        "direction": "out",
+        "name": "res"
+        }
+      ]
+    }
+
+index.js
+
+```javascript
+const AzureFuncMiddleware = require('azure-func-middleware');
+
+module.exports = new AzureFuncMiddleware()
+  .use((ctx) => {
+    ctx.res = {
+      status: 200,
+      body: 'OK'
+    };
+    ctx.done();
+  })
+  .listen();
+```
+
+## Testing
+
+The Azure Function handler returns a promise. This fact can be used for testing.
+
+#### Using with the `$return` output binding
+
+function.json
+
+    {
+      "bindings": [
+        ...
+        {
+        "type": "http",
+        "direction": "out",
+        "name": "$return"
+        }
+      ]
+    }
 
 test.js
 
 ```javascript
-const funcHandler = require('...');
+const funcHandler = require(...);
 
 it('should work', async () => {
   const context = { ... };
@@ -77,23 +143,21 @@ it('should work', async () => {
 
 function.json
 
-```
-{
-  "bindings": [
-    ...
     {
-    "type": "http",
-    "direction": "out",
-    "name": "res"
+      "bindings": [
+        ...
+        {
+        "type": "http",
+        "direction": "out",
+        "name": "res"
+        }
+      ]
     }
-  ]
-}
-```
 
 test.js
 
 ```javascript
-const funcHandler = require('...');
+const funcHandler = require(...);
 
 it('should work', async () => {
   const context = { ... };
@@ -121,16 +185,18 @@ it('should work', async () => {
     -   [useMany](#usemany)
         -   [Parameters](#parameters-4)
     -   [listen](#listen)
+-   [funcHandler](#funchandler)
+    -   [Parameters](#parameters-5)
+-   [middlewareHandler](#middlewarehandler)
+    -   [Parameters](#parameters-6)
+-   [errMiddlewareHandler](#errmiddlewarehandler)
+    -   [Parameters](#parameters-7)
 -   [middleware](#middleware)
     -   [Properties](#properties)
--   [middlewareFunction](#middlewarefunction)
-    -   [Parameters](#parameters-5)
--   [middlewareErrorFunction](#middlewareerrorfunction)
-    -   [Parameters](#parameters-6)
--   [nextFunction](#nextfunction)
-    -   [Parameters](#parameters-7)
--   [predicateFunction](#predicatefunction)
+-   [next](#next)
     -   [Parameters](#parameters-8)
+-   [predicate](#predicate)
+    -   [Parameters](#parameters-9)
 
 ### AzureFuncMiddleware
 
@@ -145,7 +211,7 @@ Add a middleware to a cascade
 
 ##### Parameters
 
--   `fn` **[middlewareFunction](#middlewarefunction)** 
+-   `fn` **[middlewareHandler](#middlewarehandler)** 
 
 #### useIf
 
@@ -153,8 +219,8 @@ Add a middleware with condition to a cascade
 
 ##### Parameters
 
--   `predicate` **[predicateFunction](#predicatefunction)** 
--   `fn` **[middlewareFunction](#middlewarefunction)** 
+-   `predicate` **[predicate](#predicate)** 
+-   `fn` **[middlewareHandler](#middlewarehandler)** 
 
 #### catch
 
@@ -162,7 +228,7 @@ Add a middleware for error handling to a cascade
 
 ##### Parameters
 
--   `fn` **[middlewareErrorFunction](#middlewareerrorfunction)** 
+-   `fn` **[errMiddlewareHandler](#errmiddlewarehandler)** 
 
 #### useMany
 
@@ -170,34 +236,34 @@ Add several middlewares to a cascade
 
 ##### Parameters
 
--   `middlewares` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;([middleware](#middleware) \| [middlewareFunction](#middlewarefunction))>** 
+-   `middlewares` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;([middleware](#middleware) \| [middlewareHandler](#middlewarehandler))>** 
 
 #### listen
 
-Compose middlewares to a handler
+Compose middlewares to a function handler
 
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)** 
+Returns **[funcHandler](#funchandler)** 
 
-### middleware
-
-Type: [Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)
-
-#### Properties
-
--   `fn` **([middlewareFunction](#middlewarefunction) \| [middlewareErrorFunction](#middlewareerrorfunction))** 
--   `isError` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** 
--   `predicate` **[predicateFunction](#predicatefunction)?** 
-
-### middlewareFunction
+### funcHandler
 
 Type: [Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function)
 
 #### Parameters
 
 -   `context` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
--   `next` **[nextFunction](#nextfunction)** 
 
-### middlewareErrorFunction
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)** 
+
+### middlewareHandler
+
+Type: [Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function)
+
+#### Parameters
+
+-   `context` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
+-   `next` **[next](#next)** 
+
+### errMiddlewareHandler
 
 Type: [Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function)
 
@@ -205,9 +271,19 @@ Type: [Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Sta
 
 -   `error` **[Error](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error)** 
 -   `context` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
--   `next` **[nextFunction](#nextfunction)** 
+-   `next` **[next](#next)** 
 
-### nextFunction
+### middleware
+
+Type: [Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)
+
+#### Properties
+
+-   `fn` **([middlewareHandler](#middlewarehandler) \| [errMiddlewareHandler](#errmiddlewarehandler))** 
+-   `isError` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** 
+-   `predicate` **[predicate](#predicate)?** 
+
+### next
 
 Type: [Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function)
 
@@ -215,7 +291,7 @@ Type: [Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Sta
 
 -   `error` **[Error](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error)?** 
 
-### predicateFunction
+### predicate
 
 Type: [Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function)
 
