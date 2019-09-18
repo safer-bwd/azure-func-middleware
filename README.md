@@ -16,8 +16,8 @@ npm install azure-func-middleware --save
 
 Method [`use`](#use) adds middleware handler to a cascade.
 Middleware handlers are executed in the order they are added.
-To go to the next middleware handler, use the `next` callback.
-Method `listen` composes middlewares to the Azure Function handler.
+To go to the next middleware handler, use the [`next`](#next) callback.
+Method [`listen`](#listen) composes middlewares to the Azure Function handler.
 
 ```javascript
 const AzureFuncMiddleware = require('azure-func-middleware');
@@ -110,7 +110,7 @@ module.exports = new AzureFuncMiddleware()
 ### Capturing errors
 
 If an error is thrown in the middleware handler, then the nearest error middleware handler is called.
-Error handlers are added by the `catch` method.
+Error handlers are added by the [`catch`](#catch) method.
 
 ```javascript
 const AzureFuncMiddleware = require('azure-func-middleware');
@@ -155,7 +155,7 @@ module.exports = new AzureFuncMiddleware()
 
 ### Conditional middlewares
 
-The method `useIf` adds a middleware handler that will be executed if the `predicate` returns true.
+The method [`useIf`](#useIf) adds a middleware handler that will be executed if the [`predicate`](#predicate) returns _true_.
 
 ```javascript
 const AzureFuncMiddleware = require('azure-func-middleware');
@@ -175,7 +175,7 @@ module.exports = new AzureFuncMiddleware()
 ### Common middlewares
 
 Often Azure Functions use a common sequence of middlewares.
-You can declare this sequence and add using the method `useMany`.
+You can declare this sequence and add using the method [`useMany`](#useMany).
 
 common-middlewares.js
 
