@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/safer-bwd/azure-func-middleware.svg?branch=master)](https://travis-ci.com/safer-bwd/azure-func-middleware)
 
-Middleware cascade implementation for Azure Functions JS 2.x (inspired by Koa and Express).
+A _middleware_ cascade implementation for Azure Functions JS 2.x (inspired by Koa and Express).
 
 ## Install
 
@@ -14,9 +14,10 @@ npm install azure-func-middleware --save
 
 ### Main flow
 
-Middleware handlers are executed in the order they are added. To move to the next middleware handler, use the `next` callback.
-
-index.js
+Method [`use`](#use) adds middleware handler to a cascade.
+Middleware handlers are executed in the order they are added.
+To go to the next middleware handler, use the `next` callback.
+Method `listen` composes middlewares to the Azure Function handler.
 
 ```javascript
 const AzureFuncMiddleware = require('azure-func-middleware');
@@ -103,6 +104,106 @@ module.exports = new AzureFuncMiddleware()
     };
     ctx.done();
   })
+  .listen();
+```
+
+### Capturing errors
+
+If an error is thrown in the middleware handler, then the nearest error middleware handler is called.
+Error handlers are added by the `catch` method.
+
+```javascript
+const AzureFuncMiddleware = require('azure-func-middleware');
+
+module.exports = new AzureFuncMiddleware()
+  .use((ctx, next) => {
+    throw new Error('Error!'); // or next(new Error('Error!'));
+  })
+  .use(async (ctx, next) => {
+    // won't be called
+    // ...
+    next()
+  })
+  .catch((err, ctx, next) => {
+    // will be called
+    ctx.done(null, {
+      status: 500,
+      body: err.message // 'Error!' 
+    });
+  })
+  .listen();
+```
+
+### Passing data through middlewares
+
+For passing data through middlewares you can use namespace `state` of [the context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
+
+```javascript
+const AzureFuncMiddleware = require('azure-func-middleware');
+
+module.exports = new AzureFuncMiddleware()
+  .use(async (ctx, next) => {
+    ctx.state.count = 1;
+    next();
+  })
+  .use((ctx, next) => {
+    ctx.state.count += 1; // ctx.state.count === 2
+    ctx.done(null, { status: 200 });
+  })
+  .listen();
+```
+
+### Conditional middlewares
+
+The method `useIf` adds a middleware handler that will be executed if the `predicate` returns true.
+
+```javascript
+const AzureFuncMiddleware = require('azure-func-middleware');
+
+module.exports = new AzureFuncMiddleware()
+  .useIf(ctx => ctx.req.method === 'HEAD', (ctx, next) => {
+    // will be called if HEAD request 
+    // ...
+  })
+  .useIf(ctx => ctx.req.method === 'GET', (ctx, next) => {
+    // will be called if GET request 
+    // ...
+  })
+  .listen();
+```
+
+### Common middlewares
+
+Often Azure Functions use a common sequence of middlewares.
+You can declare this sequence and add using the method `useMany`.
+
+common-middlewares.js
+
+```javascript
+const defineUser = (ctx, next) => { 
+  //... 
+};
+const checkRoles = (ctx, next) => {
+  //... 
+};
+
+module.exports = [
+  { fn: defineUser },
+  { fn: checkRoles }
+]
+```
+
+index.js
+
+```javascript
+const AzureFuncMiddleware = require('azure-func-middleware');
+const commonMiddlewares = require('common-middlewares');
+
+module.exports = new AzureFuncMiddleware()
+  .useMany(commonMiddlewares)
+  .use((ctx, next) => {
+      // will be called after common middlewares
+    })
   .listen();
 ```
 

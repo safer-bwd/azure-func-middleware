@@ -1,7 +1,7 @@
 {
   "name": "azure-func-middleware",
   "version": "0.5.1",
-  "description": "Middleware cascade for Azure Functions",
+  "description": "A middleware cascade for Azure Functions",
   "main": "dist/index.js",
   "repository": {
     "type": "git",
