@@ -78,7 +78,7 @@ class AzureFuncMiddleware {
     return (ctx) => {
       const log = logger(ctx);
 
-      // the recommended namespace for passing information through middleware
+      // the recommended namespace for passing information through middlewares
       ctx.state = {};
 
       let doneCalled = false;
