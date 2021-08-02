@@ -177,19 +177,20 @@ module.exports = new AzureFuncMiddleware()
 Often Azure Functions use a common sequence of middlewares.
 You can declare this sequence and add using the method [`useMany`](#useMany).
 
-common-middlewares.js
+common.js
 
 ```javascript
 const defineUser = (ctx, next) => { 
   //... 
 };
+
 const checkRoles = (ctx, next) => {
   //... 
 };
 
 module.exports = [
-  { fn: defineUser },
-  { fn: checkRoles }
+  defineUser,
+  checkRoles
 ]
 ```
 
@@ -197,12 +198,13 @@ index.js
 
 ```javascript
 const AzureFuncMiddleware = require('azure-func-middleware');
-const commonMiddlewares = require('common-middlewares');
+const common = require('common');
+
 
 module.exports = new AzureFuncMiddleware()
-  .useMany(commonMiddlewares)
+  .useMany(common)
   .use((ctx, next) => {
-      // will be called after common middlewares
+      // will be called after common
     })
   .listen();
 ```
@@ -281,23 +283,23 @@ it('should work', async () => {
         -   [Parameters](#parameters-1)
     -   [useIf](#useif)
         -   [Parameters](#parameters-2)
-    -   [catch](#catch)
-        -   [Parameters](#parameters-3)
     -   [useMany](#usemany)
+        -   [Parameters](#parameters-3)
+    -   [catch](#catch)
         -   [Parameters](#parameters-4)
+    -   [catchIf](#catchif)
+        -   [Parameters](#parameters-5)
     -   [listen](#listen)
 -   [funcHandler](#funchandler)
-    -   [Parameters](#parameters-5)
--   [middlewareHandler](#middlewarehandler)
     -   [Parameters](#parameters-6)
--   [errMiddlewareHandler](#errmiddlewarehandler)
+-   [middlewareHandler](#middlewarehandler)
     -   [Parameters](#parameters-7)
--   [middleware](#middleware)
-    -   [Properties](#properties)
--   [next](#next)
+-   [errMiddlewareHandler](#errmiddlewarehandler)
     -   [Parameters](#parameters-8)
--   [predicate](#predicate)
+-   [next](#next)
     -   [Parameters](#parameters-9)
+-   [predicate](#predicate)
+    -   [Parameters](#parameters-10)
 
 ### AzureFuncMiddleware
 
@@ -323,6 +325,14 @@ Add a middleware with condition to a cascade
 -   `predicate` **[predicate](#predicate)** 
 -   `fn` **[middlewareHandler](#middlewarehandler)** 
 
+#### useMany
+
+Add several middlewares to a cascade
+
+##### Parameters
+
+-   `fns` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;([errMiddlewareHandler](#errmiddlewarehandler) \| [middlewareHandler](#middlewarehandler))>** 
+
 #### catch
 
 Add a middleware for error handling to a cascade
@@ -331,13 +341,14 @@ Add a middleware for error handling to a cascade
 
 -   `fn` **[errMiddlewareHandler](#errmiddlewarehandler)** 
 
-#### useMany
+#### catchIf
 
-Add several middlewares to a cascade
+Add a middleware for error handling with condition to a cascade
 
 ##### Parameters
 
--   `middlewares` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;([middleware](#middleware) \| [middlewareHandler](#middlewarehandler))>** 
+-   `predicate`  
+-   `fn` **[errMiddlewareHandler](#errmiddlewarehandler)** 
 
 #### listen
 
@@ -373,16 +384,6 @@ Type: [Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Sta
 -   `error` **[Error](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error)** 
 -   `context` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
 -   `next` **[next](#next)** 
-
-### middleware
-
-Type: [Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)
-
-#### Properties
-
--   `fn` **([middlewareHandler](#middlewarehandler) \| [errMiddlewareHandler](#errmiddlewarehandler))** 
--   `isError` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** 
--   `predicate` **[predicate](#predicate)?** 
 
 ### next
 

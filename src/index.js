@@ -1,7 +1,7 @@
-import createMiddleware from './middleware/create';
+import Middleware from './middleware/Middleware';
+import ErrorMiddleware from './middleware/ErrorMiddleware';
 import createPromise from './utils/create-promise';
-import isFunction from './utils/is-function';
-import logger from './utils/logger';
+import once from './utils/once';
 
 /**
  * @param {Object} options
@@ -18,8 +18,9 @@ class AzureFuncMiddleware {
    * @param {middlewareHandler} fn
    */
   use(fn) {
-    const middleware = createMiddleware({ fn });
+    const middleware = new Middleware(fn);
     this.middlewares.push(middleware);
+
     return this;
   }
 
@@ -29,14 +30,34 @@ class AzureFuncMiddleware {
    * @param {middlewareHandler} fn
    */
   useIf(predicate, fn) {
-    const middleware = createMiddleware({ fn, predicate });
+    const middleware = new Middleware(fn, predicate);
     this.middlewares.push(middleware);
+
     return this;
   }
 
-  useIfError(fn) {
-    const middleware = createMiddleware({ fn, isError: true });
-    this.middlewares.push(middleware);
+  /**
+   * Add several middlewares to a cascade
+   * @param {Array<errMiddlewareHandler|middlewareHandler>} fns
+   */
+  useMany(fns) {
+    fns.forEach((fn) => {
+      const middleware = (fn.length > 2) ? new ErrorMiddleware(fn) : new Middleware(fn);
+      this.middlewares.push(middleware);
+    });
+
+    return this;
+  }
+
+  useManyIf(predicate, fns) {
+    const predicateOnce = once(predicate);
+
+    fns.forEach((fn) => {
+      const middleware = (fn.length > 2) ? new ErrorMiddleware(fn, predicateOnce)
+        : new Middleware(fn, predicateOnce);
+      this.middlewares.push(middleware);
+    });
+
     return this;
   }
 
@@ -45,19 +66,20 @@ class AzureFuncMiddleware {
    * @param {errMiddlewareHandler} fn
    */
   catch(fn) {
-    return this.useIfError(fn);
+    const middleware = new ErrorMiddleware(fn);
+    this.middlewares.push(middleware);
+
+    return this;
   }
 
   /**
-   * Add several middlewares to a cascade
-   * @param {Array<middleware|middlewareHandler>} middlewares
+   *  Add a middleware for error handling with condition to a cascade
+   * @param {errMiddlewareHandler} fn
    */
-  useMany(middlewares) {
-    middlewares.forEach((mw) => {
-      const props = isFunction(mw) ? { fn: mw } : mw;
-      const middleware = createMiddleware(props);
-      this.middlewares.push(middleware);
-    });
+  catchIf(predicate, fn) {
+    const middleware = new ErrorMiddleware(fn, predicate);
+    this.middlewares.push(middleware);
+
     return this;
   }
 
@@ -66,17 +88,12 @@ class AzureFuncMiddleware {
    * @return {funcHandler}
    */
   listen() {
-    /**
-     * @typedef {Function} funcHandler The Azure Function handler
-     * @param {Object} context [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
-     * @return {Promise}
-     */
     return this._createHandler();
   }
 
   _createHandler() {
     return (ctx) => {
-      const log = logger(ctx);
+      const logger = ctx.log ? ctx.log : console;
 
       // the recommended namespace for passing information through middlewares
       ctx.state = {};
@@ -93,7 +110,7 @@ class AzureFuncMiddleware {
         }
 
         if (doneCalled) {
-          if (!this.silent) log(new Error('done() called multiple times'));
+          if (!this.silent) logger.error(new Error('done() called multiple times'));
           return;
         }
 
@@ -122,7 +139,7 @@ class AzureFuncMiddleware {
         let nextCalled = false;
         const next = (err) => {
           if (nextCalled) {
-            if (!this.silent) log(new Error('next() called multiple times'));
+            if (!this.silent) logger.error(new Error('next() called multiple times'));
             return Promise.resolve();
           }
           nextCalled = true;
@@ -133,7 +150,7 @@ class AzureFuncMiddleware {
           await middleware.exec(error, ctx, next);
         } catch (err) {
           if (nextCalled) {
-            if (!this.silent) log('unhandled error after next() called', err);
+            if (!this.silent) logger.error('unhandled error after next() called', err);
             return;
           }
           handle(index + 1, err);
@@ -148,6 +165,11 @@ class AzureFuncMiddleware {
 }
 
 /**
+ * @typedef {Function} funcHandler The Azure Function handler
+ * @param {Object} context [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
+ * @return {Promise}
+ */
+/**
  * @typedef {Function} middlewareHandler
  * @param {Object} context [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
  * @param {next} next
@@ -157,12 +179,6 @@ class AzureFuncMiddleware {
  * @param {Error} error
  * @param {Object} context [The context object](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object)
  * @param {next} next
- */
-/**
- * @typedef {Object} middleware The middleware object
- * @property {middlewareHandler|errMiddlewareHandler} fn
- * @property {boolean} [isError]
- * @property {predicate} [predicate]
  */
 /**
  * @typedef {Function} next
