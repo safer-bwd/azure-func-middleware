@@ -49,6 +49,10 @@ class AzureFuncMiddleware {
     return this;
   }
 
+  /**
+   * Add several middlewares to a cascade with condition
+   * @param {Array<errMiddlewareHandler|middlewareHandler>} fns
+   */
   useManyIf(predicate, fns) {
     const predicateOnce = once(predicate);
 

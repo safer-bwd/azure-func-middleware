@@ -285,21 +285,23 @@ it('should work', async () => {
         -   [Parameters](#parameters-2)
     -   [useMany](#usemany)
         -   [Parameters](#parameters-3)
-    -   [catch](#catch)
+    -   [useManyIf](#usemanyif)
         -   [Parameters](#parameters-4)
-    -   [catchIf](#catchif)
+    -   [catch](#catch)
         -   [Parameters](#parameters-5)
+    -   [catchIf](#catchif)
+        -   [Parameters](#parameters-6)
     -   [listen](#listen)
 -   [funcHandler](#funchandler)
-    -   [Parameters](#parameters-6)
--   [middlewareHandler](#middlewarehandler)
     -   [Parameters](#parameters-7)
--   [errMiddlewareHandler](#errmiddlewarehandler)
+-   [middlewareHandler](#middlewarehandler)
     -   [Parameters](#parameters-8)
--   [next](#next)
+-   [errMiddlewareHandler](#errmiddlewarehandler)
     -   [Parameters](#parameters-9)
--   [predicate](#predicate)
+-   [next](#next)
     -   [Parameters](#parameters-10)
+-   [predicate](#predicate)
+    -   [Parameters](#parameters-11)
 
 ### AzureFuncMiddleware
 
@@ -331,6 +333,15 @@ Add several middlewares to a cascade
 
 ##### Parameters
 
+-   `fns` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;([errMiddlewareHandler](#errmiddlewarehandler) \| [middlewareHandler](#middlewarehandler))>** 
+
+#### useManyIf
+
+Add several middlewares to a cascade with condition
+
+##### Parameters
+
+-   `predicate`  
 -   `fns` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;([errMiddlewareHandler](#errmiddlewarehandler) \| [middlewareHandler](#middlewarehandler))>** 
 
 #### catch
